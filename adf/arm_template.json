@@ -1,0 +1,284 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "factoryName": {
+      "type": "string",
+      "metadata": { "description": "Azure Data Factory name" }
+    },
+    "sqlserver_connectionString": {
+      "type": "securestring",
+      "metadata": { "description": "SQL Server JDBC connection string" }
+    },
+    "snowflake_connectionString": {
+      "type": "securestring",
+      "metadata": { "description": "Snowflake JDBC connection string" }
+    }
+  },
+  "variables": {
+    "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+  },
+  "resources": [
+
+    // ── Linked Service: SQL Server ────────────────────────────────────────
+    {
+      "name": "[concat(parameters('factoryName'), '/LS_SQLServer_RetailDB')]",
+      "type": "Microsoft.DataFactory/factories/linkedServices",
+      "apiVersion": "2018-06-01",
+      "properties": {
+        "type": "SqlServer",
+        "typeProperties": {
+          "connectionString": "[parameters('sqlserver_connectionString')]"
+        }
+      }
+    },
+
+    // ── Linked Service: Snowflake ─────────────────────────────────────────
+    {
+      "name": "[concat(parameters('factoryName'), '/LS_Snowflake_RetailDW')]",
+      "type": "Microsoft.DataFactory/factories/linkedServices",
+      "apiVersion": "2018-06-01",
+      "properties": {
+        "type": "Snowflake",
+        "typeProperties": {
+          "connectionString": "[parameters('snowflake_connectionString')]"
+        }
+      }
+    },
+
+    // ── Datasets: SQL Server sources ──────────────────────────────────────
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SQL_customers')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_SQLServer_RetailDB')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_SQLServer_RetailDB", "type": "LinkedServiceReference" },
+        "type": "SqlServerTable",
+        "typeProperties": { "schema": "dbo", "table": "customers" }
+      }
+    },
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SQL_products')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_SQLServer_RetailDB')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_SQLServer_RetailDB", "type": "LinkedServiceReference" },
+        "type": "SqlServerTable",
+        "typeProperties": { "schema": "dbo", "table": "products" }
+      }
+    },
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SQL_orders')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_SQLServer_RetailDB')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_SQLServer_RetailDB", "type": "LinkedServiceReference" },
+        "type": "SqlServerTable",
+        "typeProperties": { "schema": "dbo", "table": "orders" }
+      }
+    },
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SQL_order_items')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_SQLServer_RetailDB')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_SQLServer_RetailDB", "type": "LinkedServiceReference" },
+        "type": "SqlServerTable",
+        "typeProperties": { "schema": "dbo", "table": "order_items" }
+      }
+    },
+
+    // ── Datasets: Snowflake sinks (RAW layer) ─────────────────────────────
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SF_RAW_customers')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Snowflake_RetailDW')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_Snowflake_RetailDW", "type": "LinkedServiceReference" },
+        "type": "SnowflakeTable",
+        "typeProperties": { "schema": "RAW", "table": "customers" }
+      }
+    },
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SF_RAW_products')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Snowflake_RetailDW')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_Snowflake_RetailDW", "type": "LinkedServiceReference" },
+        "type": "SnowflakeTable",
+        "typeProperties": { "schema": "RAW", "table": "products" }
+      }
+    },
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SF_RAW_orders')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Snowflake_RetailDW')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_Snowflake_RetailDW", "type": "LinkedServiceReference" },
+        "type": "SnowflakeTable",
+        "typeProperties": { "schema": "RAW", "table": "orders" }
+      }
+    },
+    {
+      "name": "[concat(parameters('factoryName'), '/DS_SF_RAW_order_items')]",
+      "type": "Microsoft.DataFactory/factories/datasets",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Snowflake_RetailDW')]"
+      ],
+      "properties": {
+        "linkedServiceName": { "referenceName": "LS_Snowflake_RetailDW", "type": "LinkedServiceReference" },
+        "type": "SnowflakeTable",
+        "typeProperties": { "schema": "RAW", "table": "order_items" }
+      }
+    },
+
+    // ── Pipeline: PL_Retail_Ingest ────────────────────────────────────────
+    {
+      "name": "[concat(parameters('factoryName'), '/PL_Retail_Ingest')]",
+      "type": "Microsoft.DataFactory/factories/pipelines",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_SQL_customers')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SQL_products')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SQL_orders')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SQL_order_items')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SF_RAW_customers')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SF_RAW_products')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SF_RAW_orders')]",
+        "[concat(variables('factoryId'), '/datasets/DS_SF_RAW_order_items')]"
+      ],
+      "properties": {
+        "description": "Ingests all retail tables from SQL Server into Snowflake RAW layer.",
+        "activities": [
+
+          // Copy customers ─────────────────────────────────────────────────
+          {
+            "name": "Copy_customers",
+            "type": "Copy",
+            "dependsOn": [],
+            "typeProperties": {
+              "source": {
+                "type": "SqlServerSource",
+                "sqlReaderQuery": "SELECT customer_id, first_name, last_name, email, age, gender, city, country, created_at FROM dbo.customers"
+              },
+              "sink": {
+                "type": "SnowflakeSink",
+                "importSettings": { "type": "SnowflakeImportCopyCommand" }
+              },
+              "enableStaging": false,
+              "translator": { "type": "TabularTranslator", "typeConversion": true }
+            },
+            "inputs":  [{ "referenceName": "DS_SQL_customers",    "type": "DatasetReference" }],
+            "outputs": [{ "referenceName": "DS_SF_RAW_customers",  "type": "DatasetReference" }]
+          },
+
+          // Copy products ──────────────────────────────────────────────────
+          {
+            "name": "Copy_products",
+            "type": "Copy",
+            "dependsOn": [],
+            "typeProperties": {
+              "source": {
+                "type": "SqlServerSource",
+                "sqlReaderQuery": "SELECT product_id, name, brand, category, department, cost, retail_price FROM dbo.products"
+              },
+              "sink": {
+                "type": "SnowflakeSink",
+                "importSettings": { "type": "SnowflakeImportCopyCommand" }
+              },
+              "enableStaging": false,
+              "translator": { "type": "TabularTranslator", "typeConversion": true }
+            },
+            "inputs":  [{ "referenceName": "DS_SQL_products",    "type": "DatasetReference" }],
+            "outputs": [{ "referenceName": "DS_SF_RAW_products",  "type": "DatasetReference" }]
+          },
+
+          // Copy orders ────────────────────────────────────────────────────
+          {
+            "name": "Copy_orders",
+            "type": "Copy",
+            "dependsOn": [
+              { "activity": "Copy_customers", "dependencyConditions": ["Succeeded"] }
+            ],
+            "typeProperties": {
+              "source": {
+                "type": "SqlServerSource",
+                "sqlReaderQuery": "SELECT order_id, customer_id, status, num_of_items, created_at, shipped_at, delivered_at, returned_at FROM dbo.orders"
+              },
+              "sink": {
+                "type": "SnowflakeSink",
+                "importSettings": { "type": "SnowflakeImportCopyCommand" }
+              },
+              "enableStaging": false,
+              "translator": { "type": "TabularTranslator", "typeConversion": true }
+            },
+            "inputs":  [{ "referenceName": "DS_SQL_orders",    "type": "DatasetReference" }],
+            "outputs": [{ "referenceName": "DS_SF_RAW_orders",  "type": "DatasetReference" }]
+          },
+
+          // Copy order_items ───────────────────────────────────────────────
+          {
+            "name": "Copy_order_items",
+            "type": "Copy",
+            "dependsOn": [
+              { "activity": "Copy_orders",   "dependencyConditions": ["Succeeded"] },
+              { "activity": "Copy_products", "dependencyConditions": ["Succeeded"] }
+            ],
+            "typeProperties": {
+              "source": {
+                "type": "SqlServerSource",
+                "sqlReaderQuery": "SELECT item_id, order_id, customer_id, product_id, status, sale_price, created_at FROM dbo.order_items"
+              },
+              "sink": {
+                "type": "SnowflakeSink",
+                "importSettings": { "type": "SnowflakeImportCopyCommand" }
+              },
+              "enableStaging": false,
+              "translator": { "type": "TabularTranslator", "typeConversion": true }
+            },
+            "inputs":  [{ "referenceName": "DS_SQL_order_items",    "type": "DatasetReference" }],
+            "outputs": [{ "referenceName": "DS_SF_RAW_order_items",  "type": "DatasetReference" }]
+          },
+
+          // Stored proc: trigger TRANSFORM layer ───────────────────────────
+          {
+            "name": "Trigger_Transform",
+            "description": "Calls Snowflake stored procedure that runs the TRANSFORM layer SQL",
+            "type": "SqlServerStoredProcedure",
+            "dependsOn": [
+              { "activity": "Copy_order_items", "dependencyConditions": ["Succeeded"] }
+            ],
+            "linkedServiceName": { "referenceName": "LS_Snowflake_RetailDW", "type": "LinkedServiceReference" },
+            "typeProperties": {
+              "storedProcedureName": "TRANSFORM.SP_RUN_TRANSFORMS"
+            }
+          }
+
+        ]
+      }
+    }
+
+  ]
+}
