@@ -1,0 +1,16 @@
+{
+	"name": "retail-data-pipeline-adf-sqlserver-snowflake",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Enabled",
+			"editable": true,
+			"isExplicitlySet": false
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "8786a370-c299-413c-b864-19506d3e41f7",
+		"tenantId": "e0793d39-0939-496d-b129-198edd916feb"
+	}
+}
